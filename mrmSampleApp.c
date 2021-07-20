@@ -82,11 +82,11 @@ int sum = 0, count = 0, number = 0;
 
 int connect_socket(char* buffer7)
 {
-	//¶¨ÒåÁ¬½ÓÌ×½Ó×Ö
+	//å®šä¹‰è¿æ¥å¥—æ¥å­—
 	int socket_ = 0;
-	//¶¨Òå½á¹¹Ìå´æ´¢·şÎñÆ÷¶ËµØÖ·ĞÅÏ¢
+	//å®šä¹‰ç»“æ„ä½“å­˜å‚¨æœåŠ¡å™¨ç«¯åœ°å€ä¿¡æ¯
 	struct sockaddr_in server_addr;
-	//Í¨¹ısocket´´½¨¼àÌıÌ×½Ó×Ö
+	//é€šè¿‡socketåˆ›å»ºç›‘å¬å¥—æ¥å­—
 	socket_ = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (socket < 0)
@@ -94,8 +94,8 @@ int connect_socket(char* buffer7)
 		perror("Fail to socket");
 		exit(EXIT_FAILURE);
 	}
-	//Ìî³ä·şÎñÆ÷µÄipµØÖ·ºÍ¶Ë¿Ú
-	memset(&server_addr, 0, sizeof(server_addr));//Çå¿Õ
+	//å¡«å……æœåŠ¡å™¨çš„ipåœ°å€å’Œç«¯å£
+	memset(&server_addr, 0, sizeof(server_addr));//æ¸…ç©º
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(8888);
 	server_addr.sin_addr.s_addr = inet_addr(buffer7);
@@ -104,7 +104,7 @@ int connect_socket(char* buffer7)
 	{
 		if (connect(socket_, (struct sockaddr*)&server_addr, sizeof(struct sockaddr)) == -1)
 		{
-			printf("connect failed:%d\r\n", errno);//Ê§°ÜÊ±¿ÉÒÔ´òÓ¡errno
+			printf("connect failed:%d\r\n", errno);//å¤±è´¥æ—¶å¯ä»¥æ‰“å°errno
 			Sleep(2);
 			//	n = send(socket_fd, str, strlen(str), 0);
 
@@ -119,17 +119,17 @@ int connect_socket(char* buffer7)
 	return socket_;
 }
 
-//Êä³öÔË¶¯ĞÅºÅ
-float distance_calculation1(mrmInfo *info)//Å×ÆúË÷ÒıÖµĞ¡ÓÚ300µÄµã
+//è¾“å‡ºè¿åŠ¨ä¿¡å·
+float distance_calculation1(mrmInfo *info)//æŠ›å¼ƒç´¢å¼•å€¼å°äº300çš„ç‚¹
 {
 
 
-	//É¸Ñ¡Êı¾İÀàĞÍ
+	//ç­›é€‰æ•°æ®ç±»å‹
 	if (info->msg.scanInfo.msgType == MRM_DETECTION_LIST_INFO)
 	{
 
 
-		if ((info->msg.detectionList.detections[0].index > 350))
+		if ((info->msg.detectionList.detections[0].index > 200))
 		{
 			index = info->msg.detectionList.detections[0].index;
 			sendflag = 1;
@@ -138,7 +138,7 @@ float distance_calculation1(mrmInfo *info)//Å×ÆúË÷ÒıÖµĞ¡ÓÚ300µÄµã
 
 		if (sendflag)
 		{
-			//¾àÀëÖµ
+			//è·ç¦»å€¼
 			distance = ((float)index * 61) * 3 / 20000;
 			printf("%f\n", distance);
 
@@ -149,8 +149,8 @@ float distance_calculation1(mrmInfo *info)//Å×ÆúË÷ÒıÖµĞ¡ÓÚ300µÄµã
 
 }
 
-//Ô­Ê¼Êı¾İ
-float distance_calculation2(mrmInfo *info)//Å×ÆúË÷ÒıÖµĞ¡ÓÚ300µÄµã
+//åŸå§‹æ•°æ®
+float distance_calculation2(mrmInfo *info)//æŠ›å¼ƒç´¢å¼•å€¼å°äº300çš„ç‚¹
 {
 	int i;
 
@@ -167,15 +167,15 @@ float distance_calculation2(mrmInfo *info)//Å×ÆúË÷ÒıÖµĞ¡ÓÚ300µÄµã
 
 }
 
-//¹ıÂËÖ®ºóµÄÔË¶¯ĞÅºÅ
+//è¿‡æ»¤ä¹‹åçš„è¿åŠ¨ä¿¡å·
 float distance_calculation3(mrmInfo *info) {
 
 
 	if (info->msg.scanInfo.msgType == MRM_DETECTION_LIST_INFO)
 	{
-		if (count == 2) {//Á¬Ğø¹ıÂËµô2¸öµãµÄÊ±ºò¿¼ÂÇ²Î¿¼ÖµÑ¡Ôñ´íÎó£¬ÖØĞÂÑ¡È¡²Î¿¼Öµ
+		if (count == 2) {//è¿ç»­è¿‡æ»¤æ‰2ä¸ªç‚¹çš„æ—¶å€™è€ƒè™‘å‚è€ƒå€¼é€‰æ‹©é”™è¯¯ï¼Œé‡æ–°é€‰å–å‚è€ƒå€¼
 			count = 0;
-			number = 0;//numberÎª0´ú±í×¼±¸½ÓÊÜÊı¾İ×÷Îª²Î¿¼Öµ
+			number = 0;//numberä¸º0ä»£è¡¨å‡†å¤‡æ¥å—æ•°æ®ä½œä¸ºå‚è€ƒå€¼
 
 		}
 
@@ -192,12 +192,12 @@ float distance_calculation3(mrmInfo *info) {
 			}
 		}
 		else {
-			//numberÎª1Ê±¸ù¾İ²Î¿¼Öµ¹ıÂËµã
+			//numberä¸º1æ—¶æ ¹æ®å‚è€ƒå€¼è¿‡æ»¤ç‚¹
 			if ((info->msg.detectionList.detections[0].index > 200) && (abs(info->msg.detectionList.detections[0].index - index) < 70 * (count + 1)))
 			{
 				index = info->msg.detectionList.detections[0].index;
 				sendflag = 1;
-				count = 0;//Ò»µ©¼ì²âµ½ºÏÊÊµÄµã¾Í½«countÇå0
+				count = 0;//ä¸€æ—¦æ£€æµ‹åˆ°åˆé€‚çš„ç‚¹å°±å°†countæ¸…0
 			}
 			else {
 				count++;
@@ -206,7 +206,7 @@ float distance_calculation3(mrmInfo *info) {
 
 		if (sendflag)
 		{
-			distance = ((float)index * 61) * 3 / 20000;//×îÖÕ·¢ËÍ¸ø·şÎñÆ÷µÄÊı¾İ
+			distance = ((float)index * 61) * 3 / 20000;//æœ€ç»ˆå‘é€ç»™æœåŠ¡å™¨çš„æ•°æ®
 			printf("%f\n", distance);
 
 		}
@@ -215,16 +215,16 @@ float distance_calculation3(mrmInfo *info) {
 }
 
 
-//¹ıÂËºóµÄÔË¶¯ĞÅºÅ£¬²¢Ìí¼ÓÔ¤²âµã
+//è¿‡æ»¤åçš„è¿åŠ¨ä¿¡å·ï¼Œå¹¶æ·»åŠ é¢„æµ‹ç‚¹
 float distance_calculation4(mrmInfo *info) {
-	int flag = 0;//ÓÃÀ´±íÊ¾ÎïÌåÊ±¿¿½ü»¹ÊÇÔ¶Àë£¬ÒÔ´ËÀ´Ô¤²âÏÂÒ»¸öµã
-	//1--Ô¶Àë£¬-1--¿¿½ü
+	int flag = 0;//ç”¨æ¥è¡¨ç¤ºç‰©ä½“æ—¶é è¿‘è¿˜æ˜¯è¿œç¦»ï¼Œä»¥æ­¤æ¥é¢„æµ‹ä¸‹ä¸€ä¸ªç‚¹
+	//1--è¿œç¦»ï¼Œ-1--é è¿‘
 
 	if (info->msg.scanInfo.msgType == MRM_DETECTION_LIST_INFO)
 	{
-		if (count == 5) {//Á¬ĞøÔ¤²âµô5¸öµãµÄÊ±ºò¿¼ÂÇ²Î¿¼ÖµÑ¡Ôñ´íÎó£¬ÖØĞÂÑ¡È¡²Î¿¼Öµ
+		if (count == 5) {//è¿ç»­é¢„æµ‹æ‰5ä¸ªç‚¹çš„æ—¶å€™è€ƒè™‘å‚è€ƒå€¼é€‰æ‹©é”™è¯¯ï¼Œé‡æ–°é€‰å–å‚è€ƒå€¼
 			count = 0;
-			number = 0;//numberÎª0´ú±í×¼±¸½ÓÊÜÊı¾İ×÷Îª²Î¿¼Öµ
+			number = 0;//numberä¸º0ä»£è¡¨å‡†å¤‡æ¥å—æ•°æ®ä½œä¸ºå‚è€ƒå€¼
 
 		}
 
@@ -241,17 +241,17 @@ float distance_calculation4(mrmInfo *info) {
 			}
 		}
 		else {
-			//numberÎª1Ê±¸ù¾İ²Î¿¼Öµ¹ıÂËµã
+			//numberä¸º1æ—¶æ ¹æ®å‚è€ƒå€¼è¿‡æ»¤ç‚¹
 
 			if (info->msg.detectionList.detections[0].index > 200 && info->msg.detectionList.detections[0].index - index > 0 && info->msg.detectionList.detections[0].index - index < 70) {
 				flag = 1;
 				index = info->msg.detectionList.detections[0].index;
-				count = 0;//Ò»µ©¼ì²âµ½ºÏÊÊµÄµã¾Í½«countÇå0
+				count = 0;//ä¸€æ—¦æ£€æµ‹åˆ°åˆé€‚çš„ç‚¹å°±å°†countæ¸…0
 			}
 			else if (info->msg.detectionList.detections[0].index > 200 && index - info->msg.detectionList.detections[0].index > 0 && index - info->msg.detectionList.detections[0].index < 70) {
 				flag = -1;
 				index = info->msg.detectionList.detections[0].index;
-				count = 0;//Ò»µ©¼ì²âµ½ºÏÊÊµÄµã¾Í½«countÇå0
+				count = 0;//ä¸€æ—¦æ£€æµ‹åˆ°åˆé€‚çš„ç‚¹å°±å°†countæ¸…0
 			}
 			else {
 				index = 50 * flag + index;
@@ -265,7 +265,7 @@ float distance_calculation4(mrmInfo *info) {
 
 		if (sendflag)
 		{
-			distance = ((float)index * 61) * 3 / 20000;//×îÖÕ·¢ËÍ¸ø·şÎñÆ÷µÄÊı¾İ
+			distance = ((float)index * 61) * 3 / 20000;//æœ€ç»ˆå‘é€ç»™æœåŠ¡å™¨çš„æ•°æ®
 			printf("%f\n", distance);
 
 		}
@@ -304,18 +304,18 @@ int main(int argc, char *argv[])
 	char buf[1024] = { 0 };
 	char buffer1[50], buffer2[50], buffer3[50], buffer4[50], buffer5[50], buffer6[50];
 	int distance_calculation_mode;
-	FILE* r = fopen("ÅäÖÃÎÄ¼ş.txt", "r");
+	FILE* r = fopen("é…ç½®æ–‡ä»¶.txt", "r");
 	if (r == NULL) {
-		printf("ÎÄ¼şÎª¿Õ");
+		printf("æ–‡ä»¶ä¸ºç©º");
 		return;
 	}
 
-	fgets(buffer1, 50, r);//É¨ÃèµãÊı
-	fgets(buffer2, 50, r);//¶Ë¿Ú
-	fgets(buffer3, 50, r);//scan stop  Ó°Ïì×î´ó¼ì²â¾àÀë
-	fgets(buffer4, 50, r);//¶¯¼ì²âµÄãĞÖµ
-	fgets(buffer5, 50, r);//1--ÔË¶¯Êı¾İ   2--Ô­Ê¼Êı¾İ    3--¹ıÂËºóµÄÔË¶¯Êı¾İ   
-	fgets(buffer6, 50, r);//ÖĞĞÄ½ÚµãµÄIPµØÖ·£¬¶Ë¿ÚºÅÄ¬ÈÏ8888
+	fgets(buffer1, 50, r);//æ‰«æç‚¹æ•°
+	fgets(buffer2, 50, r);//ç«¯å£
+	fgets(buffer3, 50, r);//scan stop  å½±å“æœ€å¤§æ£€æµ‹è·ç¦»
+	fgets(buffer4, 50, r);//åŠ¨æ£€æµ‹çš„é˜ˆå€¼
+	fgets(buffer5, 50, r);//1--è¿åŠ¨æ•°æ®   2--åŸå§‹æ•°æ®    3--è¿‡æ»¤åçš„è¿åŠ¨æ•°æ®   
+	fgets(buffer6, 50, r);//ä¸­å¿ƒèŠ‚ç‚¹çš„IPåœ°å€ï¼Œç«¯å£å·é»˜è®¤8888
 
 	distance_calculation_mode = atoi(buffer5);
 	int ret = 0;
@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
 	mrmIf = mrmIfUsb;
 	haveRadioAddr = 1;
 	haveServiceIp = 1;
-	serviceIp = "127.0.0.1";//ServiceµØÖ·£¬localhost
+	serviceIp = "127.0.0.1";//Serviceåœ°å€ï¼Œlocalhost
 	radioAddr = buffer2;
 
 
@@ -524,14 +524,14 @@ int main(int argc, char *argv[])
 	printf("\nScanning with scan count of %d and interval of %d (microseconds)\n", userScanCount, userScanInterval);
 
 
-	//ÏòUWB·¢ËÍ¿ØÖÆĞÅÏ¢£¬¿ªÊ¼É¨Ãè
+	//å‘UWBå‘é€æ§åˆ¶ä¿¡æ¯ï¼Œå¼€å§‹æ‰«æ
 	mrmControl(userScanCount, userScanInterval);
 
 
 
 	while (1)
 	{
-		//Á¬½Ó¶Ï¿ªºóÒª×Ô¶¯½øĞĞÖØÁ¬
+		//è¿æ¥æ–­å¼€åè¦è‡ªåŠ¨è¿›è¡Œé‡è¿
 		if (!is_connected)
 		{
 			socket_fd = connect_socket(buffer6);
@@ -560,9 +560,9 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		memset(str, 0, sizeof(str));//Çå¿Õstr
-		sprintf(str, "%f", distance);//°ÑfloatĞÍÊı¾İ×ª»»³ÉstringĞÍ
-		//ÓÃ#½«Êı¾İÖ®¼ä¸ô¿ª£¬ÒòÎª·¢ËÍËÙ¶ÈÌ«¿ì£¬ÖĞĞÄ½ÚµãÓĞ¿ÉÄÜ»á½ÓÊÕµ½Á½×éÁ¬ĞøµÄÊı¾İ
+		memset(str, 0, sizeof(str));//æ¸…ç©ºstr
+		sprintf(str, "%f", distance);//æŠŠfloatå‹æ•°æ®è½¬æ¢æˆstringå‹
+		//ç”¨#å°†æ•°æ®ä¹‹é—´éš”å¼€ï¼Œå› ä¸ºå‘é€é€Ÿåº¦å¤ªå¿«ï¼Œä¸­å¿ƒèŠ‚ç‚¹æœ‰å¯èƒ½ä¼šæ¥æ”¶åˆ°ä¸¤ç»„è¿ç»­çš„æ•°æ®
 		strcat(str, "#");
 
 		if (sendflag == 1)
