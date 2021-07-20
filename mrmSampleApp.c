@@ -69,7 +69,7 @@ float distance = 0.0;
 int   userScanInterval;
 mrmInfo info;
 bool is_connected = false;
-int timeoutMs=500, recvflag = 0, scanflag = 0,sendflag=0,index=0;
+int timeoutMs = 500, recvflag = 0, scanflag = 0, sendflag = 0, index = 0;
 char recvbuf[N] = { 0 };
 int socket_fd = 0;
 int n = 0;
@@ -88,7 +88,7 @@ int connect_socket(char* buffer7)
 	struct sockaddr_in server_addr;
 	//通过socket创建监听套接字
 	socket_ = socket(AF_INET, SOCK_STREAM, 0);
-	
+
 	if (socket < 0)
 	{
 		perror("Fail to socket");
@@ -122,30 +122,30 @@ int connect_socket(char* buffer7)
 //输出运动信号
 float distance_calculation1(mrmInfo *info)//抛弃索引值小于300的点
 {
-	
-	
+
+
 	//筛选数据类型
 	if (info->msg.scanInfo.msgType == MRM_DETECTION_LIST_INFO)
 	{
-		
-	
-			if ((info->msg.detectionList.detections[0].index > 350))
-			{
-				index = info->msg.detectionList.detections[0].index;
-				sendflag = 1;
-			}
-		
-			
-			if (sendflag)
-			{
-				//距离值
-				distance = ((float)index * 61) * 3 / 20000;
-				printf("%f\n", distance);
-				
-			}
+
+
+		if ((info->msg.detectionList.detections[0].index > 350))
+		{
+			index = info->msg.detectionList.detections[0].index;
+			sendflag = 1;
+		}
+
+
+		if (sendflag)
+		{
+			//距离值
+			distance = ((float)index * 61) * 3 / 20000;
+			printf("%f\n", distance);
+
+		}
 		return distance;
 	}
-	
+
 
 }
 
@@ -159,7 +159,7 @@ float distance_calculation2(mrmInfo *info)//抛弃索引值小于300的点
 	{
 		for (i = 0; i < info->msg.scanInfo.numSamplesTotal; i++)
 		{
-			printf( " %d/n", info->scan[i]);
+			printf(" %d/n", info->scan[i]);
 		}
 
 	}
@@ -169,18 +169,18 @@ float distance_calculation2(mrmInfo *info)//抛弃索引值小于300的点
 
 //过滤之后的运动信号
 float distance_calculation3(mrmInfo *info) {
-	
+
 
 	if (info->msg.scanInfo.msgType == MRM_DETECTION_LIST_INFO)
 	{
-		if (count == 3) {//连续过滤掉3个点的时候考虑参考值选择错误，重新选取参考值
+		if (count == 2) {//连续过滤掉2个点的时候考虑参考值选择错误，重新选取参考值
 			count = 0;
 			number = 0;//number为0代表准备接受数据作为参考值
-			printf("change  !\n");
+
 		}
 
 		if (number == 0) {
-			if ((info->msg.detectionList.detections[0].index > 350))
+			if ((info->msg.detectionList.detections[0].index > 200))
 			{
 				index = info->msg.detectionList.detections[0].index;
 				printf("index = %f\n", ((float)index * 61) * 3 / 20000);
@@ -193,7 +193,7 @@ float distance_calculation3(mrmInfo *info) {
 		}
 		else {
 			//number为1时根据参考值过滤点
-			if ((info->msg.detectionList.detections[0].index > 350)&&(abs(info->msg.detectionList.detections[0].index-index)<150*(count+1)))
+			if ((info->msg.detectionList.detections[0].index > 200) && (abs(info->msg.detectionList.detections[0].index - index) < 70 * (count + 1)))
 			{
 				index = info->msg.detectionList.detections[0].index;
 				sendflag = 1;
@@ -203,17 +203,75 @@ float distance_calculation3(mrmInfo *info) {
 				count++;
 			}
 		}
-		
+
 		if (sendflag)
 		{
 			distance = ((float)index * 61) * 3 / 20000;//最终发送给服务器的数据
 			printf("%f\n", distance);
-			
+
 		}
 		return distance;
 	}
 }
 
+
+//过滤后的运动信号，并添加预测点
+float distance_calculation4(mrmInfo *info) {
+	int flag = 0;//用来表示物体时靠近还是远离，以此来预测下一个点
+	//1--远离，-1--靠近
+
+	if (info->msg.scanInfo.msgType == MRM_DETECTION_LIST_INFO)
+	{
+		if (count == 5) {//连续预测掉5个点的时候考虑参考值选择错误，重新选取参考值
+			count = 0;
+			number = 0;//number为0代表准备接受数据作为参考值
+
+		}
+
+		if (number == 0) {
+			if ((info->msg.detectionList.detections[0].index > 200))
+			{
+				index = info->msg.detectionList.detections[0].index;
+				printf("index = %f\n", ((float)index * 61) * 3 / 20000);
+				sendflag = 1;
+				number = 1;
+			}
+			else {
+				count++;
+			}
+		}
+		else {
+			//number为1时根据参考值过滤点
+
+			if (info->msg.detectionList.detections[0].index > 200 && info->msg.detectionList.detections[0].index - index > 0 && info->msg.detectionList.detections[0].index - index < 70) {
+				flag = 1;
+				index = info->msg.detectionList.detections[0].index;
+				count = 0;//一旦检测到合适的点就将count清0
+			}
+			else if (info->msg.detectionList.detections[0].index > 200 && index - info->msg.detectionList.detections[0].index > 0 && index - info->msg.detectionList.detections[0].index < 70) {
+				flag = -1;
+				index = info->msg.detectionList.detections[0].index;
+				count = 0;//一旦检测到合适的点就将count清0
+			}
+			else {
+				index = 50 * flag + index;
+				count++;
+			}
+			sendflag = 1;
+
+
+
+		}
+
+		if (sendflag)
+		{
+			distance = ((float)index * 61) * 3 / 20000;//最终发送给服务器的数据
+			printf("%f\n", distance);
+
+		}
+		return distance;
+	}
+}
 
 //_____________________________________________________________________________
 //
@@ -222,12 +280,12 @@ float distance_calculation3(mrmInfo *info) {
 
 static void mrmSampleExit(void)
 {
-    if (connected)
-        mrmDisconnect();
-    mrmIfClose();
+	if (connected)
+		mrmDisconnect();
+	mrmIfClose();
 	printf("finish");
 	getchar();
-    exit(0);
+	exit(0);
 }
 
 
@@ -238,15 +296,15 @@ static void mrmSampleExit(void)
 
 int main(int argc, char *argv[])
 {
-	
-    char *radioAddr = DEFAULT_RADIO_IP, *serviceIp;
-    int haveRadioAddr = 0;
-    int i,  mode;
+
+	char *radioAddr = DEFAULT_RADIO_IP, *serviceIp;
+	int haveRadioAddr = 0;
+	int i, mode;
 	int userBaseII, userScanStart, userScanStop, userScanCount, userScanInterval, userTxGain, userPrintInfo, userLogging;
 	char buf[1024] = { 0 };
 	char buffer1[50], buffer2[50], buffer3[50], buffer4[50], buffer5[50], buffer6[50];
 	int distance_calculation_mode;
-	FILE* r = fopen("配置文件.txt","r");
+	FILE* r = fopen("配置文件.txt", "r");
 	if (r == NULL) {
 		printf("文件为空");
 		return;
@@ -261,19 +319,19 @@ int main(int argc, char *argv[])
 
 	distance_calculation_mode = atoi(buffer5);
 	int ret = 0;
-	
+
 
 	mrmIfType mrmIf;
 
-    // config and status strucs
-    mrmConfiguration config;
-    mrmMsg_GetStatusInfoConfirm statusInfo;
+	// config and status strucs
+	mrmConfiguration config;
+	mrmMsg_GetStatusInfoConfirm statusInfo;
 
-    // filter settings
-    mrmFilterConfig filterConfig;
+	// filter settings
+	mrmFilterConfig filterConfig;
 
-    // raw and filtered scans and detection lists are sent in this struct
-    mrmInfo info;
+	// raw and filtered scans and detection lists are sent in this struct
+	mrmInfo info;
 
 	// announce to the world
 	printf("MRM Sample App\n\n");
@@ -288,90 +346,91 @@ int main(int argc, char *argv[])
 	userPrintInfo = 0;
 	userLogging = 0;
 
-   
-			        mrmIf = mrmIfUsb;
-					haveRadioAddr = 1;
-					haveServiceIp = 1;
-					serviceIp = "127.0.0.1";//Service地址，localhost
-					radioAddr = buffer2;
-				
+
+	mrmIf = mrmIfUsb;
+	haveRadioAddr = 1;
+	haveServiceIp = 1;
+	serviceIp = "127.0.0.1";//Service地址，localhost
+	radioAddr = buffer2;
 
 
 
-    // Now print out what we are doing
-    printf("Radio address: %s (%s)\n", radioAddr, mrmIf == mrmIfUsb ? "USB" :
-            (mrmIf == mrmIfIp ? "Ethernet" : "Serial"));
-    if (haveServiceIp)
-        printf("Using MRM service at IP address: %s\n", serviceIp);
-    else
-        printf("Receiving scans directly from radio (no scan server).\n");
 
-    // If using service, connect to it
-    if (haveServiceIp)
-    {
-        mrm_uint32_t status;
+	// Now print out what we are doing
+	printf("Radio address: %s (%s)\n", radioAddr, mrmIf == mrmIfUsb ? "USB" :
+		(mrmIf == mrmIfIp ? "Ethernet" : "Serial"));
+	if (haveServiceIp)
+		printf("Using MRM service at IP address: %s\n", serviceIp);
+	else
+		printf("Receiving scans directly from radio (no scan server).\n");
 
-        if (mrmIfInit(mrmIfIp, serviceIp) != OK)
-        {
-            printf("Failed to connect to service (bad IP address?).\n");
+	// If using service, connect to it
+	if (haveServiceIp)
+	{
+		mrm_uint32_t status;
+
+		if (mrmIfInit(mrmIfIp, serviceIp) != OK)
+		{
+			printf("Failed to connect to service (bad IP address?).\n");
 			getchar();
-            exit(0);
-        }
-        // connect to radio
-        if ((mrmConnect(mrmIf, radioAddr, &status) != OK) ||
-                (status != MRM_SERVER_CONNECTIONSTATUSCODE_CONNECTED))
-        {
-            printf("Unable to connect to radio through service.\n");
-            mrmSampleExit();
-        }
-        connected = 1;
-    } else
-    {
-        // initialize the interface to the RCM
-        if (mrmIfInit(mrmIf, radioAddr) != OK)
-        {
-            printf("Initialization failed.\n");
+			exit(0);
+		}
+		// connect to radio
+		if ((mrmConnect(mrmIf, radioAddr, &status) != OK) ||
+			(status != MRM_SERVER_CONNECTIONSTATUSCODE_CONNECTED))
+		{
+			printf("Unable to connect to radio through service.\n");
+			mrmSampleExit();
+		}
+		connected = 1;
+	}
+	else
+	{
+		// initialize the interface to the RCM
+		if (mrmIfInit(mrmIf, radioAddr) != OK)
+		{
+			printf("Initialization failed.\n");
 			getchar();
-            exit(0);
-        }
-    }
+			exit(0);
+		}
+	}
 
-    // make sure radio is in active mode
-    if (mrmSleepModeGet(&mode) != OK)
-    {
-        printf("Time out waiting for sleep mode.\n");
-        mrmSampleExit();
-    }
+	// make sure radio is in active mode
+	if (mrmSleepModeGet(&mode) != OK)
+	{
+		printf("Time out waiting for sleep mode.\n");
+		mrmSampleExit();
+	}
 
 	// print sleep mode
-    printf("Radio sleep mode is %d.\n", mode);
-    if (mode != MRM_SLEEP_MODE_ACTIVE)
-    {
-        printf("Changing sleep mode to Active.\n");
-        mrmSleepModeSet(MRM_SLEEP_MODE_ACTIVE);
-    }
+	printf("Radio sleep mode is %d.\n", mode);
+	if (mode != MRM_SLEEP_MODE_ACTIVE)
+	{
+		printf("Changing sleep mode to Active.\n");
+		mrmSleepModeSet(MRM_SLEEP_MODE_ACTIVE);
+	}
 
-    // make sure radio is in MRM mode
-    if (mrmOpmodeGet(&mode) != OK)
-    {
-        printf("Time out waiting for mode of operation.\n");
-        mrmSampleExit();
-    }
+	// make sure radio is in MRM mode
+	if (mrmOpmodeGet(&mode) != OK)
+	{
+		printf("Time out waiting for mode of operation.\n");
+		mrmSampleExit();
+	}
 
 	// print radio opmode
-    printf("Radio mode of operation is %d.\n", mode);
-    if (mode != MRM_OPMODE_MRM)
-    {
-        printf("Changing radio mode to MRM.\n");
-        mrmOpmodeSet(MRM_OPMODE_MRM);
-    }
+	printf("Radio mode of operation is %d.\n", mode);
+	if (mode != MRM_OPMODE_MRM)
+	{
+		printf("Changing radio mode to MRM.\n");
+		mrmOpmodeSet(MRM_OPMODE_MRM);
+	}
 
-    // retrieve config from MRM
-    if (mrmConfigGet(&config) != 0)
-    {
-        printf("Time out waiting for config confirm.\n");
-        mrmSampleExit();
-    }
+	// retrieve config from MRM
+	if (mrmConfigGet(&config) != 0)
+	{
+		printf("Time out waiting for config confirm.\n");
+		mrmSampleExit();
+	}
 
 	// modify config with user inputs
 	config.baseIntegrationIndex = userBaseII;
@@ -386,41 +445,41 @@ int main(int argc, char *argv[])
 		mrmSampleExit();
 	}
 
-    // print out configuration
-    printf("\nConfiguration:\n");
-    printf("\tnodeId: %d\n", config.nodeId);
-    printf("\tscanStartPs: %d\n", config.scanStartPs);
-    printf("\tscanEndPs: %d\n", config.scanEndPs);
-    printf("\tscanResolutionBins: %d\n", config.scanResolutionBins);
-    printf("\tbaseIntegrationIndex: %d\n", config.baseIntegrationIndex);
-    for (i = 0 ; i < 4; i++)
-    {
-        printf("\tsegment %d segmentNumSamples: %d\n", i, config.segmentNumSamples[i]);
-        printf("\tsegment %d segmentIntMult: %d\n", i, config.segmentIntMult[i]);
-    }
-    printf("\tantennaMode: %d\n", config.antennaMode);
-    printf("\ttxGain: %d\n", config.txGain);
-    printf("\tcodeChannel: %d\n", config.codeChannel);
+	// print out configuration
+	printf("\nConfiguration:\n");
+	printf("\tnodeId: %d\n", config.nodeId);
+	printf("\tscanStartPs: %d\n", config.scanStartPs);
+	printf("\tscanEndPs: %d\n", config.scanEndPs);
+	printf("\tscanResolutionBins: %d\n", config.scanResolutionBins);
+	printf("\tbaseIntegrationIndex: %d\n", config.baseIntegrationIndex);
+	for (i = 0; i < 4; i++)
+	{
+		printf("\tsegment %d segmentNumSamples: %d\n", i, config.segmentNumSamples[i]);
+		printf("\tsegment %d segmentIntMult: %d\n", i, config.segmentIntMult[i]);
+	}
+	printf("\tantennaMode: %d\n", config.antennaMode);
+	printf("\ttxGain: %d\n", config.txGain);
+	printf("\tcodeChannel: %d\n", config.codeChannel);
 
 
 
 	//mrmFilterConfigSet(mrmFilterConfig *config)
 
-    if (haveServiceIp)
-    {
-        // now get the filter config from MRM
-        if (mrmFilterConfigGet(&filterConfig) != 0)
-        {
-            printf("Time out waiting for filter config confirm.\n");
-            mrmSampleExit();
-        }
-		
-        // print out filter configuration
-        printf("\nFilter Configuration:\n");
-        printf("\tfilterFlags: %d\n", filterConfig.filterFlags);
-        printf("\tmotionFilterIndex: %d\n", filterConfig.motionFilterIndex);
-        printf("\tdetectionListThresholdMult: %d\n", filterConfig.detectionListThresholdMult);
-		  
+	if (haveServiceIp)
+	{
+		// now get the filter config from MRM
+		if (mrmFilterConfigGet(&filterConfig) != 0)
+		{
+			printf("Time out waiting for filter config confirm.\n");
+			mrmSampleExit();
+		}
+
+		// print out filter configuration
+		printf("\nFilter Configuration:\n");
+		printf("\tfilterFlags: %d\n", filterConfig.filterFlags);
+		printf("\tmotionFilterIndex: %d\n", filterConfig.motionFilterIndex);
+		printf("\tdetectionListThresholdMult: %d\n", filterConfig.detectionListThresholdMult);
+
 		filterConfig.detectionListThresholdMult = atoi(buffer4);
 		if (mrmFilterConfigSet(&filterConfig) != 0)
 		{
@@ -432,42 +491,42 @@ int main(int argc, char *argv[])
 		printf("\tfilterFlags: %d\n", filterConfig.filterFlags);
 		printf("\tmotionFilterIndex: %d\n", filterConfig.motionFilterIndex);
 		printf("\tdetectionListThresholdMult: %d\n", filterConfig.detectionListThresholdMult);
-    }
+	}
 
-    // retrieve status info from MRM
-    if (mrmStatusInfoGet(&statusInfo) != 0)
-    {
-        printf("Time out waiting for status info confirm.\n");
-        mrmSampleExit();
-    }
+	// retrieve status info from MRM
+	if (mrmStatusInfoGet(&statusInfo) != 0)
+	{
+		printf("Time out waiting for status info confirm.\n");
+		mrmSampleExit();
+	}
 
-    // print out status info
-    printf("\nStatus Info:\n");
-    printf("\tPackage version: %s\n", statusInfo.packageVersionStr);
-    printf("\tApp version: %d.%d build %d\n", statusInfo.appVersionMajor,
-            statusInfo.appVersionMinor, statusInfo.appVersionBuild);
-    printf("\tUWB Kernel version: %d.%d build %d\n", statusInfo.uwbKernelVersionMajor,
-            statusInfo.uwbKernelVersionMinor, statusInfo.uwbKernelVersionBuild);
-    printf("\tFirmware version: %x/%x/%x ver %X\n", statusInfo.firmwareMonth,
-            statusInfo.firmwareDay, statusInfo.firmwareYear,
-            statusInfo.firmwareVersion);
-    printf("\tSerial number: %08X\n", statusInfo.serialNum);
-    printf("\tBoard revision: %c\n", statusInfo.boardRev);
-    printf("\tTemperature: %.2f degC\n\n", statusInfo.temperature/4.0);
+	// print out status info
+	printf("\nStatus Info:\n");
+	printf("\tPackage version: %s\n", statusInfo.packageVersionStr);
+	printf("\tApp version: %d.%d build %d\n", statusInfo.appVersionMajor,
+		statusInfo.appVersionMinor, statusInfo.appVersionBuild);
+	printf("\tUWB Kernel version: %d.%d build %d\n", statusInfo.uwbKernelVersionMajor,
+		statusInfo.uwbKernelVersionMinor, statusInfo.uwbKernelVersionBuild);
+	printf("\tFirmware version: %x/%x/%x ver %X\n", statusInfo.firmwareMonth,
+		statusInfo.firmwareDay, statusInfo.firmwareYear,
+		statusInfo.firmwareVersion);
+	printf("\tSerial number: %08X\n", statusInfo.serialNum);
+	printf("\tBoard revision: %c\n", statusInfo.boardRev);
+	printf("\tTemperature: %.2f degC\n\n", statusInfo.temperature / 4.0);
 
-	
 
-    //
-    // Ready to start collecting scans...
+
+	//
+	// Ready to start collecting scans...
 	//
 
-    // Start scanning on the MRM
-    printf("\nScanning with scan count of %d and interval of %d (microseconds)\n", userScanCount, userScanInterval);
- 
+	// Start scanning on the MRM
+	printf("\nScanning with scan count of %d and interval of %d (microseconds)\n", userScanCount, userScanInterval);
+
 
 	//向UWB发送控制信息，开始扫描
 	mrmControl(userScanCount, userScanInterval);
-	
+
 
 
 	while (1)
@@ -478,13 +537,13 @@ int main(int argc, char *argv[])
 			socket_fd = connect_socket(buffer6);
 			printf("connect success\r\n");
 		}
-		
+
 		if (mrmInfoGet(timeoutMs, &info) == -1)
 		{
 			printf("finish!!!");
 			break;
 		}
-		
+
 
 		switch (distance_calculation_mode) {
 		case 1:
@@ -496,13 +555,16 @@ int main(int argc, char *argv[])
 		case 3:
 			distance = distance_calculation3(&info);
 			break;
+		case 4:
+			distance = distance_calculation4(&info);
+			break;
 		}
-		
+
 		memset(str, 0, sizeof(str));//清空str
 		sprintf(str, "%f", distance);//把float型数据转换成string型
 		//用#将数据之间隔开，因为发送速度太快，中心节点有可能会接收到两组连续的数据
 		strcat(str, "#");
-	
+
 		if (sendflag == 1)
 		{
 
@@ -526,18 +588,18 @@ int main(int argc, char *argv[])
 
 
 
-    // stop radio
-    if (mrmControl(0, 0) != 0)
-    {
-        printf("Time out waiting for control confirm.\n");
-        mrmSampleExit();
-    }
+	// stop radio
+	if (mrmControl(0, 0) != 0)
+	{
+		printf("Time out waiting for control confirm.\n");
+		mrmSampleExit();
+	}
 
-    // perform cleanup
+	// perform cleanup
 	printf("\n\nAll Done!\n");
-	
-    mrmSampleExit();
-    return 0;
+
+	mrmSampleExit();
+	return 0;
 }
 
 
